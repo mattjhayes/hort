@@ -101,7 +101,7 @@ def main(argv):
         print "Setting headers to close TCP sessions..."
         headers = {'Connection': 'close'}
 
-    #*** Use this if totaltime is set:
+    #*** Use this if max_run_time is set:
     initial_time = time.time()
 
     #*** Start the loop:
@@ -166,6 +166,3 @@ if __name__ == "__main__":
     #*** Run the main function with command line
     #***  arguments from position 1
     main(sys.argv[1:])
-
-
-
