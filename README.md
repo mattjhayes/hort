@@ -11,6 +11,8 @@ Example usage:
     python hort.py -u http://sv1.example.com/static/index.html -i 2 -n
 
 Options:
+
+'''
  -h, --help          display this help and exit
 
  -u, --URL           URL of object to retrieve (can include port number)
@@ -28,7 +30,9 @@ Options:
                        (default is 1)
 
  -v, --version       output version information and exit
+'''
 
  Results are written in following CSV format:
+ 
  timestamp,elapsed_time_measured_by_requests_module,
     elapsed_time_measured_by_hort
