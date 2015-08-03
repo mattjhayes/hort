@@ -5,10 +5,14 @@ Use this program to run repeated timed retrievals of an HTTP object
 (resource), with results written to file for analysis over time.
 
 Usage:
- hort -u URL [options]
+```
+hort -u URL [options]
+```
 
 Example usage:
-    python hort.py -u http://sv1.example.com/static/index.html -i 2 -n
+```
+python hort.py -u http://sv1.example.com/static/index.html -i 2 -n
+```
 
 Options:
 
@@ -30,6 +34,6 @@ Options:
 ```
 
  Results are written in following CSV format:
- 
- timestamp,elapsed_time_measured_by_requests_module,
-    elapsed_time_measured_by_hort
+```
+timestamp,elapsed_time_measured_by_requests_module,elapsed_time_measured_by_hort
+```
