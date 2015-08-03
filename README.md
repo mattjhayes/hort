@@ -6,7 +6,7 @@ Use this program to run repeated timed retrievals of an HTTP object
 
 Usage:
 ```
-hort -u URL [options]
+python hort.py -u URL [options]
 ```
 
 Example usage:
