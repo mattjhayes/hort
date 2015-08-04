@@ -41,18 +41,20 @@ def main(argv):
     """
     Main function of hort
     """
-    version = 1.9
+    version = 2.0
     keepalive = True
     interval = 1
     url = ""
     max_run_time = 0
     finished = 0
+    output_file = 0
 
     #*** Start by parsing command line parameters:
     try:
-        opts, args = getopt.getopt(argv, "hvu:m:ni:", ["help",
-                                   "version", "url=", "max-run-time=",
-                                   "no-keepalive", "interval="])
+        opts, args = getopt.getopt(argv, "hu:m:ni:w:v", ["help",
+                                   "url=", "max-run-time=",
+                                   "no-keepalive", "interval=",
+                                   "output-file=", "version"])
     except getopt.GetoptError:
         print "hort: Error with options"
         print_help()
@@ -72,6 +74,8 @@ def main(argv):
             keepalive = False
         elif opt in ("-i", "--interval"):
             interval = float(arg)
+        elif opt in ("-w", "--output-file"):
+            output_file = arg
 
     if not url:
         #*** We weren't passed a URL so have to exit
@@ -79,7 +83,10 @@ def main(argv):
         sys.exit()
 
     #*** Write results to a CSV file:
-    filename = time.strftime("%Y%m%d-%H%M%S.csv")
+    if output_file:
+        filename = output_file
+    else:
+        filename = time.strftime("%Y%m%d-%H%M%S.csv")
     print "results filename is", filename
     with open(filename, 'a') as the_file:
         the_file.write(url)
@@ -140,21 +147,23 @@ Use this program to run repeated timed retrievals of an HTTP object
 (resource), with results written to file for analysis over time.
 
 Usage:
- hort -u URL [options]
+  python hort -u URL [options]
 
 Example usage:
-    python hort.py -u http://sv1.example.com/static/index.html -i 2 -n
+  python hort.py -u http://sv1.example.com/static/index.html -i 2 -n
 
 Options:
- -h, --help          display this help and exit
+ -h, --help          Display this help and exit
  -u, --URL           URL of object to retrieve (can include port number)
  -m, --max-run-time  Maximum time to run for before exiting
                        (default is infinite)
- -n, --no-keepalive  use separate TCP session per request
+ -n, --no-keepalive  Use separate TCP session per request
                        (default is reuse TCP session)
- -i, --interval      interval between requests in seconds
+ -i, --interval      Interval between requests in seconds
                        (default is 1)
- -v, --version       output version information and exit
+ -w, --output-file   Specify an output filename
+                       (default is format YYYYMMDD-HHMMSS.csv)
+ -v, --version       Output version information and exit
 
  Results are written in following CSV format:
  <timestamp>,<elapsed_time_measured_by_requests_module>,
