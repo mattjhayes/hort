@@ -147,7 +147,7 @@ Use this program to run repeated timed retrievals of an HTTP object
 (resource), with results written to file for analysis over time.
 
 Usage:
-  python hort -u URL [options]
+  python hort.py -u URL [options]
 
 Example usage:
   python hort.py -u http://sv1.example.com/static/index.html -i 2 -n
