@@ -55,8 +55,8 @@ def main(argv):
                                    "url=", "max-run-time=",
                                    "no-keepalive", "interval=",
                                    "output-file=", "version"])
-    except getopt.GetoptError:
-        print "hort: Error with options"
+    except getopt.GetoptError as err:
+        print "hort: Error with options:", err
         print_help()
         sys.exit(2)
     for opt, arg in opts:
