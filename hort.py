@@ -31,6 +31,8 @@ whatsoever. You have been warned.
 
 #*** Import library to do HTTP GET requests:
 import requests
+
+import socket
 import datetime
 import time
 
@@ -41,20 +43,30 @@ def main(argv):
     """
     Main function of hort
     """
-    version = 2.0
+    version = "0.1.0"
     keepalive = True
     interval = 1
     url = ""
     max_run_time = 0
     finished = 0
     output_file = 0
+    output_file_enabled = 0
+    header_row = 1
+
+    #*** Get the hostname for use in filenames etc:
+    hostname = socket.gethostname()
 
     #*** Start by parsing command line parameters:
     try:
-        opts, args = getopt.getopt(argv, "hu:m:ni:w:v", ["help",
-                                   "url=", "max-run-time=",
-                                   "no-keepalive", "interval=",
-                                   "output-file=", "version"])
+        opts, args = getopt.getopt(argv, "hu:m:ni:w:Wjv",
+                                ["help",
+                                "url=",
+                                "max-run-time=",
+                                "no-keepalive",
+                                "interval=",
+                                "output-file=",
+                                "no-header-row",
+                                "version"])
     except getopt.GetoptError as err:
         print "hort: Error with options:", err
         print_help()
@@ -76,21 +88,43 @@ def main(argv):
             interval = float(arg)
         elif opt in ("-w", "--output-file"):
             output_file = arg
+            output_file_enabled = 1
+        elif opt == "-W":
+            output_file = "hort-" + hostname + "-" + \
+                             time.strftime("%Y%m%d-%H%M%S.csv")
+            output_file_enabled = 1
+        elif opt in ("-j", "--no-header-row"):
+            header_row = 0
 
     if not url:
         #*** We weren't passed a URL so have to exit
         print "hort: Error, no URL passed. Exiting..."
         sys.exit()
 
-    #*** Write results to a CSV file:
-    if output_file:
-        filename = output_file
+    print "\nHTTP Object Retrieval Test (hort) version", version 
+    print "URL is", url
+    #*** Display output filename:
+    if output_file_enabled:
+        print "Results filename is", output_file
     else:
-        filename = time.strftime("%Y%m%d-%H%M%S.csv")
-    print "results filename is", filename
-    with open(filename, 'a') as the_file:
-        the_file.write(url)
-        the_file.write('\n')
+        print "Not outputing results to file, as option not selected"
+
+    if output_file_enabled and header_row:
+        #*** Write a header row to CSV:
+        if keepalive:
+            session = "-cxn-keep-alive"
+        else:
+            session = "-cxn-close"
+        header_csv = "time," + \
+                        hostname + session + "-requests-time," + \
+                        hostname + session + "-hort-time," + \
+                        "\"" + hostname + session + "-" + url + \
+                        "-status-code\"\n"
+        with open(output_file, 'a') as the_file:
+            the_file.write(header_csv)
+
+    if not header_row:
+        print "Not writing a header row to CSV"
 
     #*** Set up an HTTP/1.1 session:
     s = requests.session()
@@ -123,10 +157,15 @@ def main(argv):
         #*** Put the stats into a nice string for printing and
         #***  writing to file:
         result = str(timestamp) + "," + str(r.elapsed.total_seconds()) \
-                                  + "," + str(total_time) + "\n"
+                                  + "," + str(total_time) \
+                                  + "," + str(r.status_code)
         print result
-        with open(filename, 'a') as the_file:
-            the_file.write(result)
+
+        if output_file_enabled:
+            #*** Write results to CSV file:
+            with open(output_file, 'a') as the_file:
+                the_file.write(result)
+                the_file.write("\n")
 
         if max_run_time:
             if (start_time - initial_time) > max_run_time:
@@ -150,7 +189,7 @@ Usage:
   python hort.py -u URL [options]
 
 Example usage:
-  python hort.py -u http://sv1.example.com/static/index.html -i 2 -n
+  python hort.py -u http://sv1.example.com/static/index.html -i 2 -n -W
 
 Options:
  -h, --help          Display this help and exit
@@ -162,7 +201,10 @@ Options:
  -i, --interval      Interval between requests in seconds
                        (default is 1)
  -w, --output-file   Specify an output filename
-                       (default is format YYYYMMDD-HHMMSS.csv)
+ -W                  Output results to default filename
+                       default format is:
+                       hort-HOSTNAME-YYYYMMDD-HHMMSS.csv
+ -j  --no-header-row       Suppress writing header row into CSV
  -v, --version       Output version information and exit
 
  Results are written in following CSV format:
