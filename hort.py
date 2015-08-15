@@ -192,24 +192,24 @@ Example usage:
   python hort.py -u http://sv1.example.com/static/index.html -i 2 -n -W
 
 Options:
- -h, --help          Display this help and exit
- -u, --URL           URL of object to retrieve (can include port number)
- -m, --max-run-time  Maximum time to run for before exiting
-                       (default is infinite)
- -n, --no-keepalive  Use separate TCP session per request
-                       (default is reuse TCP session)
- -i, --interval      Interval between requests in seconds
-                       (default is 1)
- -w, --output-file   Specify an output filename
- -W                  Output results to default filename
-                       default format is:
-                       hort-HOSTNAME-YYYYMMDD-HHMMSS.csv
- -j  --no-header-row       Suppress writing header row into CSV
- -v, --version       Output version information and exit
+ -h, --help            Display this help and exit
+ -u, --URL             URL of object to retrieve (can include port)
+ -m, --max-run-time    Maximum time to run for before exiting
+                         (default is infinite)
+ -n, --no-keepalive    Use separate TCP session per request
+                         (default is reuse TCP session)
+ -i, --interval        Interval between requests in seconds
+                         (default is 1)
+ -w, --output-file     Specify an output filename
+ -W                    Output results to default filename
+                         default format is:
+                         hort-HOSTNAME-YYYYMMDD-HHMMSS.csv
+ -j  --no-header-row   Suppress writing header row into CSV
+ -v, --version         Output version information and exit
 
  Results are written in following CSV format:
  <timestamp>,<elapsed_time_measured_by_requests_module>,
-    <elapsed_time_measured_by_hort>
+    <elapsed_time_measured_by_hort>, <HTTP_response_code>
  """
     return()
 
