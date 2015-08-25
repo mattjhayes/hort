@@ -35,6 +35,7 @@ import requests
 import socket
 import datetime
 import time
+import os
 
 #*** Import sys and getopt for command line argument parsing:
 import sys, getopt
@@ -43,29 +44,35 @@ def main(argv):
     """
     Main function of hort
     """
-    version = "0.1.0"
+    version = "0.1.1"
     keepalive = True
     interval = 1
+    proxy = 0
     url = ""
     max_run_time = 0
     finished = 0
     output_file = 0
     output_file_enabled = 0
+    output_path = 0
     header_row = 1
+    kvp = 0
 
     #*** Get the hostname for use in filenames etc:
     hostname = socket.gethostname()
 
     #*** Start by parsing command line parameters:
     try:
-        opts, args = getopt.getopt(argv, "hu:m:ni:w:Wjv",
+        opts, args = getopt.getopt(argv, "hu:m:ni:p:w:Wb:jkv",
                                 ["help",
                                 "url=",
                                 "max-run-time=",
                                 "no-keepalive",
                                 "interval=",
+                                "proxy=",
                                 "output-file=",
+                                "output-path=",
                                 "no-header-row",
+                                "kvp",
                                 "version"])
     except getopt.GetoptError as err:
         print "hort: Error with options:", err
@@ -75,7 +82,7 @@ def main(argv):
         if opt in ("-h", "--help"):
             print_help()
             sys.exit()
-        elif opt == '-V':
+        elif opt in ("-v", "--version"):
             print 'hort.py version', version
             sys.exit()
         elif opt in ("-u", "--url"):
@@ -86,6 +93,8 @@ def main(argv):
             keepalive = False
         elif opt in ("-i", "--interval"):
             interval = float(arg)
+        elif opt in ("-p", "--proxy"):
+            proxy = arg
         elif opt in ("-w", "--output-file"):
             output_file = arg
             output_file_enabled = 1
@@ -93,8 +102,12 @@ def main(argv):
             output_file = "hort-" + hostname + "-" + \
                              time.strftime("%Y%m%d-%H%M%S.csv")
             output_file_enabled = 1
+        elif opt in ("-b", "--output-path"):
+            output_path = arg
         elif opt in ("-j", "--no-header-row"):
             header_row = 0
+        elif opt in ("-k", "--kvp"):
+            kvp = 1
 
     if not url:
         #*** We weren't passed a URL so have to exit
@@ -105,6 +118,8 @@ def main(argv):
     print "URL is", url
     #*** Display output filename:
     if output_file_enabled:
+        if output_path:
+            output_file = os.path.join(output_path, output_file)
         print "Results filename is", output_file
     else:
         print "Not outputing results to file, as option not selected"
@@ -116,8 +131,7 @@ def main(argv):
         else:
             session = "-cxn-close"
         header_csv = "time," + \
-                        hostname + session + "-requests-time," + \
-                        hostname + session + "-hort-time," + \
+                        hostname + session + "-retrieval-time," + \
                         "\"" + hostname + session + "-" + url + \
                         "-status-code\"\n"
         with open(output_file, 'a') as the_file:
@@ -145,20 +159,35 @@ def main(argv):
     #*** Use this if max_run_time is set:
     initial_time = time.time()
 
+    #*** If using a proxy set the parameters:
+    if proxy:
+        http_proxy  = "http://" + proxy
+        https_proxy = "https://" + proxy
+        proxyDict = { 
+              "http"  : http_proxy, 
+              "https" : https_proxy 
+            }
+
     #*** Start the loop:
     while not finished:
         timenow = datetime.datetime.now()
         timestamp = timenow.strftime("%H:%M:%S")
         start_time = time.time()
         #*** Make the HTTP GET request:
-        r = s.get(url, headers=headers)
+        if not proxy:
+            r = s.get(url, headers=headers)
+        else:
+            r = s.get(url, headers=headers, proxies=proxyDict)
         end_time = time.time()
         total_time = end_time - start_time
         #*** Put the stats into a nice string for printing and
         #***  writing to file:
-        result = str(timestamp) + "," + str(r.elapsed.total_seconds()) \
-                                  + "," + str(total_time) \
+        if not kvp:
+            result = str(timestamp) + "," + str(total_time) \
                                   + "," + str(r.status_code)
+        else:
+            result = str(timestamp) + ",load_time=" + str(total_time) \
+                                  + ",status=" + str(r.status_code)
         print result
 
         if output_file_enabled:
@@ -200,16 +229,18 @@ Options:
                          (default is reuse TCP session)
  -i, --interval        Interval between requests in seconds
                          (default is 1)
+ -p, --proxy           Use a proxy, format is NAME:PORT
  -w, --output-file     Specify an output filename
  -W                    Output results to default filename
                          default format is:
                          hort-HOSTNAME-YYYYMMDD-HHMMSS.csv
+ -b, --output-path     Specify path to output file directory
  -j  --no-header-row   Suppress writing header row into CSV
+ -k  --kvp             Write output data as key=value pairs 
  -v, --version         Output version information and exit
 
  Results are written in following CSV format:
- <timestamp>,<elapsed_time_measured_by_requests_module>,
-    <elapsed_time_measured_by_hort>, <HTTP_response_code>
+   <timestamp>, <elapsed_time_measured_by_hort>, <HTTP_response_code>
  """
     return()
 

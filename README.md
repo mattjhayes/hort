@@ -27,22 +27,32 @@ Options:
                          (default is reuse TCP session)
  -i, --interval        Interval between requests in seconds
                          (default is 1)
+ -p, --proxy           Use a proxy, format is NAME:PORT
  -w, --output-file     Specify an output filename
  -W                    Output results to default filename
                          default format is:
                          hort-HOSTNAME-YYYYMMDD-HHMMSS.csv
+ -b, --output-path     Specify path to output file directory
  -j  --no-header-row   Suppress writing header row into CSV
+ -k  --kvp             Write output data as key=value pairs 
  -v, --version         Output version information and exit
 ```
 
  Results are written in following CSV format:
 ```
-timestamp, elapsed_time_requests_module, elapsed_time_measured_by_hort,
-HTTP_response_code
+<timestamp>, <elapsed_time_measured_by_hort>, <HTTP_response_code>
 ```
+
 Example output:
 ```
-20:41:05,0.031679,0.0661058425903
-20:41:07,0.002359,0.00296592712402
-20:41:09,0.004727,0.0057680606842
+21:28:37,0.00408291816711,200
+21:28:38,0.00426006317139,200
+21:28:39,0.00414991378784,200
+```
+
+Example Key-Value Pair (KVP) output:
+```
+21:27:38,load_time=0.00442314147949,status=200
+21:27:39,load_time=0.00450420379639,status=200
+21:27:40,load_time=0.00425410270691,status=200
 ```
