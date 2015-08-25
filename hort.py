@@ -151,10 +151,14 @@ def main(argv):
     #***  based on preference:
     if keepalive:
         print "Setting headers to keep TCP session alive..."
-        headers = {'Connection': 'keep-alive'}
+        headers = {'Connection': 'keep-alive',
+                   'Cache-Control': 'no-cache',
+                   'Pragma': 'no-cache'}
     else:
         print "Setting headers to close TCP sessions..."
-        headers = {'Connection': 'close'}
+        headers = {'Connection': 'close',
+                   'Cache-Control': 'no-cache',
+                   'Pragma': 'no-cache'}
 
     #*** Use this if max_run_time is set:
     initial_time = time.time()
