@@ -44,7 +44,7 @@ def main(argv):
     """
     Main function of hort
     """
-    version = "0.1.1"
+    version = "0.1.2"
     keepalive = True
     interval = 1
     proxy = 0
@@ -133,7 +133,7 @@ def main(argv):
         header_csv = "time," + \
                         hostname + session + "-retrieval-time," + \
                         "\"" + hostname + session + "-" + url + \
-                        "-status-code\"\n"
+                        "-status-code\",content-length\n"
         with open(output_file, 'a') as the_file:
             the_file.write(header_csv)
 
@@ -182,16 +182,21 @@ def main(argv):
             r = s.get(url, headers=headers)
         else:
             r = s.get(url, headers=headers, proxies=proxyDict)
+
         end_time = time.time()
         total_time = end_time - start_time
         #*** Put the stats into a nice string for printing and
         #***  writing to file:
         if not kvp:
             result = str(timestamp) + "," + str(total_time) \
-                                  + "," + str(r.status_code)
+                                  + "," + str(r.status_code) \
+                                  + "," + \
+                                  str(r.headers.get('content-length'))
         else:
             result = str(timestamp) + ",load_time=" + str(total_time) \
-                                  + ",status=" + str(r.status_code)
+                                  + ",status=" + str(r.status_code) \
+                                  + ",size=" + \
+                                  str(r.headers.get('content-length'))
         print result
 
         if output_file_enabled:
