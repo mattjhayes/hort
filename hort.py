@@ -56,6 +56,10 @@ def main(argv):
     output_path = 0
     header_row = 1
     kvp = 0
+    #*** What to record if connection fails:
+    arbitrary_timeout = 99
+    arbitrary_status = "failure"
+    arbitrary_content_len = 0
 
     #*** Get the hostname for use in filenames etc:
     hostname = socket.gethostname()
@@ -171,6 +175,8 @@ def main(argv):
               "http"  : http_proxy, 
               "https" : https_proxy 
             }
+    else:
+        proxyDict = {}
 
     #*** Start the loop:
     while not finished:
@@ -178,25 +184,33 @@ def main(argv):
         timestamp = timenow.strftime("%H:%M:%S")
         start_time = time.time()
         #*** Make the HTTP GET request:
-        if not proxy:
-            r = s.get(url, headers=headers)
-        else:
+        failure = 0
+        try:
             r = s.get(url, headers=headers, proxies=proxyDict)
-
+        except:
+            failure = 1
         end_time = time.time()
         total_time = end_time - start_time
+        if not failure:
+            retrieval_time = str(total_time)
+            status_code = str(r.status_code)
+            content_len = str(r.headers.get('content-length'))
+        else:
+            #*** Results that reflect a connection failure:
+            retrieval_time = str(arbitrary_timeout)
+            status_code = str(arbitrary_status)
+            content_len = str(arbitrary_content_len)
         #*** Put the stats into a nice string for printing and
         #***  writing to file:
         if not kvp:
-            result = str(timestamp) + "," + str(total_time) \
-                                  + "," + str(r.status_code) \
-                                  + "," + \
-                                  str(r.headers.get('content-length'))
+            result = str(timestamp) + "," +  retrieval_time\
+                                  + "," +  status_code \
+                                  + "," + content_len
+                                  
         else:
-            result = str(timestamp) + ",load_time=" + str(total_time) \
-                                  + ",status=" + str(r.status_code) \
-                                  + ",size=" + \
-                                  str(r.headers.get('content-length'))
+            result = str(timestamp) + ",load_time=" + retrieval_time \
+                                  + ",status=" + status_code \
+                                  + ",size=" + content_len
         print result
 
         if output_file_enabled:
