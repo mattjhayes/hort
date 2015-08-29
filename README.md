@@ -20,7 +20,7 @@ Options:
 
 ```
  -h, --help            Display this help and exit
- -u, --URL             URL of object to retrieve (can include port)
+ -u, --url             URL of object to retrieve (can include port)
  -m, --max-run-time    Maximum time to run for before exiting
                          (default is infinite)
  -n, --no-keepalive    Use separate TCP session per request
