@@ -321,7 +321,8 @@ Options:
  -v, --version         Output version information and exit
 
  Results are written in following CSV format:
-   <timestamp>, <elapsed_time_measured_by_hort>, <HTTP_response_code>
+   <timestamp>, <elapsed_time_measured_by_hort>, <HTTP_response_code>,
+      <object_size>[,<other_optional_values>]
  """
     return()
 
