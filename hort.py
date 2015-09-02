@@ -32,10 +32,14 @@ whatsoever. You have been warned.
 #*** Import library to do HTTP GET requests:
 import requests
 
+#*** General imports:
 import socket
 import datetime
 import time
 import os
+
+#*** For parsing JSON responses:
+import json
 
 #*** Import sys and getopt for command line argument parsing:
 import sys, getopt
@@ -44,7 +48,7 @@ def main(argv):
     """
     Main function of hort
     """
-    version = "0.1.2"
+    version = "0.1.3"
     keepalive = True
     interval = 1
     proxy = 0
@@ -56,17 +60,20 @@ def main(argv):
     output_path = 0
     header_row = 1
     kvp = 0
+    log_object_data = 0
+    parse_json = 0
     #*** What to record if connection fails:
     arbitrary_timeout = 99
     arbitrary_status = "failure"
     arbitrary_content_len = 0
+    verify = True
 
     #*** Get the hostname for use in filenames etc:
     hostname = socket.gethostname()
 
     #*** Start by parsing command line parameters:
     try:
-        opts, args = getopt.getopt(argv, "hu:m:ni:p:w:Wb:jkv",
+        opts, args = getopt.getopt(argv, "hu:m:ni:p:w:Wb:jkcxz:v",
                                 ["help",
                                 "url=",
                                 "max-run-time=",
@@ -77,6 +84,9 @@ def main(argv):
                                 "output-path=",
                                 "no-header-row",
                                 "kvp",
+                                "log-object-data",
+                                "parse-json",
+                                "verify=",
                                 "version"])
     except getopt.GetoptError as err:
         print "hort: Error with options:", err
@@ -110,6 +120,17 @@ def main(argv):
             output_path = arg
         elif opt in ("-j", "--no-header-row"):
             header_row = 0
+        elif opt in ("-c", "--log-object-data"):
+            log_object_data = 1
+        elif opt in ("-x", "--parse-json"):
+            parse_json = 1
+        elif opt in ("-z", "--verify"):
+            if arg == 'True':
+                verify = True
+            elif arg == 'False':
+                verify = False
+            else:
+                verify = arg
         elif opt in ("-k", "--kvp"):
             kvp = 1
 
@@ -138,6 +159,7 @@ def main(argv):
                         hostname + session + "-retrieval-time," + \
                         "\"" + hostname + session + "-" + url + \
                         "-status-code\",content-length\n"
+        
         with open(output_file, 'a') as the_file:
             the_file.write(header_csv)
 
@@ -186,7 +208,8 @@ def main(argv):
         #*** Make the HTTP GET request:
         failure = 0
         try:
-            r = s.get(url, headers=headers, proxies=proxyDict)
+            r = s.get(url, headers=headers, proxies=proxyDict,
+                                 verify=verify)
         except:
             failure = 1
         end_time = time.time()
@@ -195,22 +218,34 @@ def main(argv):
             retrieval_time = str(total_time)
             status_code = str(r.status_code)
             content_len = str(r.headers.get('content-length'))
+            object_data = str(r.text)
         else:
             #*** Results that reflect a connection failure:
             retrieval_time = str(arbitrary_timeout)
             status_code = str(arbitrary_status)
             content_len = str(arbitrary_content_len)
+            object_data = ""
         #*** Put the stats into a nice string for printing and
         #***  writing to file:
+        if parse_json:
+            object_data = convert_json_to_csv(object_data, kvp)
+        #*** Assemble the result string:
         if not kvp:
             result = str(timestamp) + "," +  retrieval_time\
                                   + "," +  status_code \
                                   + "," + content_len
-                                  
+            if log_object_data:
+                result += "," + object_data
         else:
             result = str(timestamp) + ",load_time=" + retrieval_time \
                                   + ",status=" + status_code \
                                   + ",size=" + content_len
+            if log_object_data and not parse_json:
+                result += ",object_data=" + object_data
+            elif log_object_data:
+                result += ","
+                result += object_data
+        #*** Print result string to screen:
         print result
 
         if output_file_enabled:
@@ -225,6 +260,21 @@ def main(argv):
 
         #*** Sleep for interval seconds:
         time.sleep(interval)
+
+def convert_json_to_csv(json_data, kvp):
+    """
+    Convert simple flat JSON into CSV
+    Pass kvp as True if you want key-value pairs
+    """
+    #*** Convert JSON object data into CSV:
+    json_object = json.loads(json_data)
+    csv_data = ""
+    for x, y in json_object.items():
+        if not kvp:
+            csv_data += str(y) + ","
+        else:
+            csv_data += str(x) + "=" + str(y) + ","
+    return csv_data
 
 def print_help():
     """
@@ -259,7 +309,15 @@ Options:
                          hort-HOSTNAME-YYYYMMDD-HHMMSS.csv
  -b, --output-path     Specify path to output file directory
  -j  --no-header-row   Suppress writing header row into CSV
- -k  --kvp             Write output data as key=value pairs 
+ -k  --kvp             Write output data as key=value pairs
+ -c  --log-object-data Write the HTTP object data into the output file
+ -x, --parse-json      Enable this if you want to log results from an
+                         API that are in JSON. Will only work if JSON is
+                         simple, flat and not jagged.
+ -z  --verify          Control SSL verification. Default is True
+                         Specify False to skip SSL cert verification
+                         Specify path to certfile to use own trusted
+                           certificates
  -v, --version         Output version information and exit
 
  Results are written in following CSV format:
