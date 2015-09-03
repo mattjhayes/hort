@@ -218,7 +218,7 @@ def main(argv):
             retrieval_time = str(total_time)
             status_code = str(r.status_code)
             content_len = str(r.headers.get('content-length'))
-            object_data = str(r.text)
+            object_data = unicode(r.text)
         else:
             #*** Results that reflect a connection failure:
             retrieval_time = str(arbitrary_timeout)
