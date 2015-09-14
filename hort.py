@@ -48,7 +48,7 @@ def main(argv):
     """
     Main function of hort
     """
-    version = "0.1.3"
+    version = "0.1.4"
     keepalive = True
     interval = 1
     proxy = 0
@@ -59,6 +59,7 @@ def main(argv):
     output_file_enabled = 0
     output_path = 0
     header_row = 1
+    elapsed_time = 0
     kvp = 0
     log_object_data = 0
     parse_json = 0
@@ -73,7 +74,7 @@ def main(argv):
 
     #*** Start by parsing command line parameters:
     try:
-        opts, args = getopt.getopt(argv, "hu:m:ni:p:w:Wb:jkcxz:v",
+        opts, args = getopt.getopt(argv, "hu:m:ni:p:w:Wb:jekcxz:v",
                                 ["help",
                                 "url=",
                                 "max-run-time=",
@@ -83,6 +84,7 @@ def main(argv):
                                 "output-file=",
                                 "output-path=",
                                 "no-header-row",
+                                "elapsed-time",
                                 "kvp",
                                 "log-object-data",
                                 "parse-json",
@@ -120,6 +122,8 @@ def main(argv):
             output_path = arg
         elif opt in ("-j", "--no-header-row"):
             header_row = 0
+        elif opt in ("-e", "--elapsed-time"):
+            elapsed_time = 1
         elif opt in ("-c", "--log-object-data"):
             log_object_data = 1
         elif opt in ("-x", "--parse-json"):
@@ -139,7 +143,7 @@ def main(argv):
         print "hort: Error, no URL passed. Exiting..."
         sys.exit()
 
-    print "\nHTTP Object Retrieval Test (hort) version", version 
+    print "\nHTTP Object Retrieval Test (hort) version", version
     print "URL is", url
     #*** Display output filename:
     if output_file_enabled:
@@ -155,11 +159,13 @@ def main(argv):
             session = "-cxn-keep-alive"
         else:
             session = "-cxn-close"
-        header_csv = "time," + \
-                        hostname + session + "-retrieval-time," + \
+        header_csv = "time,"
+        if elapsed_time:
+            header_csv += "GET_elapsed-time,"
+        header_csv += hostname + session + "-retrieval-time," + \
                         "\"" + hostname + session + "-" + url + \
                         "-status-code\",content-length\n"
-        
+
         with open(output_file, 'a') as the_file:
             the_file.write(header_csv)
 
@@ -191,14 +197,17 @@ def main(argv):
 
     #*** If using a proxy set the parameters:
     if proxy:
-        http_proxy  = "http://" + proxy
+        http_proxy = "http://" + proxy
         https_proxy = "https://" + proxy
-        proxyDict = { 
-              "http"  : http_proxy, 
-              "https" : https_proxy 
+        proxyDict = {
+              "http"  : http_proxy,
+              "https" : https_proxy
             }
     else:
         proxyDict = {}
+
+    #*** Use for base for calculating total elapsed time:
+    base_start_time = time.time()
 
     #*** Start the loop:
     while not finished:
@@ -231,20 +240,26 @@ def main(argv):
             object_data = convert_json_to_csv(object_data, kvp)
         #*** Assemble the result string:
         if not kvp:
-            result = str(timestamp) + "," +  retrieval_time\
-                                  + "," +  status_code \
+            result = str(timestamp) + ","
+            if elapsed_time:
+                result += str(start_time - base_start_time) \
+                        + ","
+            result += retrieval_time + "," +  status_code \
                                   + "," + content_len
             if log_object_data:
                 result += "," + object_data
         else:
-            result = str(timestamp) + ",load_time=" + retrieval_time \
+            result = str(timestamp) + ","
+            if elapsed_time:
+                result += "GET_elapsed_time=" + \
+                str(start_time - base_start_time) + ","
+            result += "load_time=" + retrieval_time \
                                   + ",status=" + status_code \
                                   + ",size=" + content_len
             if log_object_data and not parse_json:
                 result += ",object_data=" + object_data
             elif log_object_data:
-                result += ","
-                result += object_data
+                result += "," + object_data
         #*** Print result string to screen:
         print result
 
@@ -294,24 +309,26 @@ Example usage:
   python hort.py -u http://sv1.example.com/static/index.html -i 2 -n -W
 
 Options:
- -h, --help            Display this help and exit
- -u, --url             URL of object to retrieve (can include port)
- -m, --max-run-time    Maximum time to run for before exiting
+ -h  --help            Display this help and exit
+ -u  --url             URL of object to retrieve (can include port)
+ -m  --max-run-time    Maximum time to run for before exiting
                          (default is infinite)
- -n, --no-keepalive    Use separate TCP session per request
+ -n  --no-keepalive    Use separate TCP session per request
                          (default is reuse TCP session)
- -i, --interval        Interval between requests in seconds
+ -i  --interval        Interval between requests in seconds
                          (default is 1)
- -p, --proxy           Use a proxy, format is NAME:PORT
- -w, --output-file     Specify an output filename
+ -p  --proxy           Use a proxy, format is NAME:PORT
+ -w  --output-file     Specify an output filename
  -W                    Output results to default filename
                          default format is:
                          hort-HOSTNAME-YYYYMMDD-HHMMSS.csv
- -b, --output-path     Specify path to output file directory
+ -b  --output-path     Specify path to output file directory
  -j  --no-header-row   Suppress writing header row into CSV
+ -e  --elapsed-time    Log the elapsed time when the GET request was
+                        sent (not elapsed time when result was returned)
  -k  --kvp             Write output data as key=value pairs
  -c  --log-object-data Write the HTTP object data into the output file
- -x, --parse-json      Enable this if you want to log results from an
+ -x  --parse-json      Enable this if you want to log results from an
                          API that are in JSON. Will only work if JSON is
                          simple, flat and not jagged.
  -z  --verify          Control SSL verification. Default is True
@@ -321,7 +338,7 @@ Options:
  -v, --version         Output version information and exit
 
  Results are written in following CSV format:
-   <timestamp>, <elapsed_time_measured_by_hort>, <HTTP_response_code>,
+   <timestamp>, <object_retrieval_time>, <HTTP_response_code>,
       <object_size>[,<other_optional_values>]
  """
     return()

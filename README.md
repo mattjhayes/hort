@@ -35,6 +35,8 @@ Options:
                          hort-HOSTNAME-YYYYMMDD-HHMMSS.csv
  -b, --output-path     Specify path to output file directory
  -j  --no-header-row   Suppress writing header row into CSV
+ -e  --elapsed-time    Log the elapsed time when the GET request was
+                        sent (not elapsed time when result was returned)
  -k  --kvp             Write output data as key=value pairs
  -c  --log-object-data Write the HTTP object data into the output file
  -x, --parse-json      Enable this if you want to log results from an
@@ -49,7 +51,7 @@ Options:
 
  Results are written in following CSV format:
 ```
-<timestamp>, <elapsed_time_measured_by_hort>, <HTTP_response_code>,<object_size>[,<other_optional_values>]
+<timestamp>, <object_retrieval_time>, <HTTP_response_code>,<object_size>[,<other_optional_values>]
 ```
 
 Simple Example:
