@@ -209,7 +209,7 @@ def main(argv):
     #*** Start the loop:
     while not finished:
         timenow = datetime.datetime.now()
-        timestamp = timenow.strftime("%H:%M:%S")
+        timestamp = timenow.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
         start_time = time.time()
         #*** Make the HTTP GET request:
         failure = 0
@@ -335,8 +335,10 @@ Options:
  -v, --version         Output version information and exit
 
  Results are written in following CSV format:
-   <timestamp>, <object_retrieval_time>, <HTTP_response_code>,
-      <object_size>[,<other_optional_values>]
+   <timestamp>, <object_retrieval_time>,
+      <HTTP_response_code>, <object_size>[,<other_optional_values>]
+
+ Note that the timestamp is the time that the request was issued at
  """
     return()
 
