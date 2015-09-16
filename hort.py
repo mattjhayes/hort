@@ -69,6 +69,7 @@ def main(argv):
     arbitrary_content_len = 0
     verify = True
 
+
     #*** Get the hostname for use in filenames etc:
     hostname = socket.gethostname()
 
@@ -174,10 +175,6 @@ def main(argv):
 
     #*** Set up an HTTP/1.1 session:
     s = requests.session()
-
-    #*** Hack the HTTP adapter to set max retries to a larger value:
-    a = requests.adapters.HTTPAdapter(max_retries=5)
-    s.mount('http://', a)
 
     #*** Set HTTP Headers to either keep connection alive or close
     #***  based on preference:
